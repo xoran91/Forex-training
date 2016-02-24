@@ -12,26 +12,39 @@ class FT:
                                  cursorclass=pymysql.cursors.DictCursor)
 
     data = ''
-    sql_request = "SELECT `lastPrice`,`accUsd`,`accRub`,`shortSize` FROM `data` WHERE 1"
+    sql_request = "SELECT `USDRUB_LASTPRICE`,`USD`,`RUB`,`shortSize` FROM `data` WHERE 1"
     with connection.cursor() as cursor:
             cursor.execute(sql_request, ())
             data = cursor.fetchone()
 
-    char = ','        
-    basic_currency = float(data['accRub'])
-    quote_currency = float(data['accUsd'])
+    b_char = ' R'
+    q_char = ' $'
+    pair = 'USDRUB=X'
+
+    split_char = ','
+    quote_currency = float(data['USD'])
+    basic_currency = float(data['RUB'])
     quote_price = float(ystockquote.get_price('USDRUB=X'))
-    last_quote_price = float(data['lastPrice'])
+    last_quote_price = float(data['USDRUB_LASTPRICE'])
     short = float(data['shortSize'])
 
     def get_quote_price(self):
-        quote_price = float(ystockquote.get_price('USDRUB=X'))
+        quote_price = float(ystockquote.get_price(self.pair))
         return quote_price
-
-    def save_data(self):
-        sql = "UPDATE `data` SET `accUsd`=%s,`accRub`=%s,`lastPrice`=%s,`shortSize`=%s WHERE 1;"
+    def get_data(self):
+        data = ''
+        sql_request = "SELECT `{0}`,`{1}`,`{2}` FROM `data` WHERE 1".format(self.pair[:6]+'_LASTPRICE', self.pair[:3], self.pair[3:6])
         with self.connection.cursor() as cursor:
-            cursor.execute(sql, (self.quote_currency, self.basic_currency, self.last_quote_price, self.short))
+                cursor.execute(sql_request, ())
+                data = cursor.fetchone()
+        self.quote_currency = float(data[self.pair[:3]])
+        self.basic_currency = float(data[self.pair[3:6]])
+        self.last_quote_price = float(data[self.pair[:6]+'_LASTPRICE'])
+            
+    def save_data(self):
+        sql = "UPDATE `data` SET `{0}`=%s,`{1}`=%s,`{2}`=%s WHERE 1;".format(self.pair[:3], self.pair[3:6], self.pair[:6]+'_LASTPRICE')
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, (self.quote_currency, self.basic_currency, self.last_quote_price))
         self.connection.commit()
 
     def format_value(self, value):
@@ -39,17 +52,33 @@ class FT:
         result = temp[:len(temp) % 3]
         temp = temp[len(temp) % 3:]
         for i in range(1, len(temp) // 3 + 1):
-            result += self.char + temp[(i-1)*3:i*3]
-        return result.strip(self.char)
+            result += self.split_char + temp[(i-1)*3:i*3]
+        return result.strip(self.split_char)
     
     def buy(self):
+        self.get_data()
         self.quote_currency += self.basic_currency / self.get_quote_price()
         self.basic_currency = 0
         self.last_quote_price = self.get_quote_price()
         self.save_data()
         
     def sell(self):
+        self.get_data()        
         self.basic_currency += self.quote_currency * self.get_quote_price()
         self.quote_currency = 0
-        self.last_quote_price = self.get_quote_price()
+        self.last_quote_price = 0
         self.save_data()
+
+    def select_usdrub(self):
+        self.save_data
+        self.pair = 'USDRUB=X'
+        self.b_char = ' R'
+        self.q_char = ' $'
+        self.get_data()
+
+    def select_eurusd(self):
+        self.save_data
+        self.pair = 'EURUSD=X'
+        self.b_char = ' $'
+        self.q_char = ' E'
+        self.get_data()

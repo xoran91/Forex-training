@@ -1,11 +1,11 @@
-from ftcore import FT
+from core import Core
 from unicurses import *
 from collections import *
 import rlib
 import time
 import threading
 
-ft = FT()
+ft = Core()
 stdscr = initscr()
 curs_set(False)
 noecho()
@@ -27,7 +27,7 @@ def render_screen():
 buffer_price = ft.get_quote_price()        
 def update_price():
     while (True):
-        # ИНДУССКИЙ КОД!
+        ''' ИНДУССКИЙ КОД! ''' 
         global buffer_price
         global price_text
         buf = ft.get_quote_price()
@@ -38,11 +38,11 @@ def update_price():
         buffer_price = buf
         price_text.content = str(buf)
         price_text.attr = color_pair(price_color) | A_BOLD
-        time.sleep(1)
         if(ft.last_quote_price!=0):
             income_text.content = 'Income: ' + str(income).split('.')[0]
-        if(ft.last_quote_price==0): # И ШОРТ_САЙЗ==0!
+        if(ft.last_quote_price==0 and ft.short_size==0):
             income_text.content = ''
+        time.sleep(1)  
 
 
 menu_switching = False
@@ -80,7 +80,6 @@ price_text = rlib.Text(buffer_price, color_pair(1) | A_BOLD, 3, 0)
 income_text = rlib.Text('', color_pair(4) | A_BOLD, 3, 17)
 
 running = True
-# Обрабатываем в два потока рендеринг, обработку нажатия клавиш и обновление котировок.
 def handle_key():
     global menu
     global pair_menu
@@ -98,7 +97,7 @@ def handle_key():
             menu.key_down()
             pair_menu.key_down()
         if(key == 10):
-            # Костыль!
+            ''' Костыль! '''
             if(not menu_switching):
                 pair_menu.key_enter()
             if(not menu_switching):

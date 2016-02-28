@@ -40,6 +40,9 @@ def update_price():
         price_text.attr = color_pair(price_color) | A_BOLD
         if(ft.last_quote_price!=0):
             income_text.content = 'Income: ' + str(income).split('.')[0]
+        if(ft.short_size!=0):
+            short_income = ((ft.short_size / buf) - 3000) * 0.90
+            income_text.content = 'Income: ' + str(short_income).split('.')[0]
         if(ft.last_quote_price==0 and ft.short_size==0):
             income_text.content = ''
         time.sleep(1)  
@@ -65,6 +68,8 @@ def set_pair_menu_disabled():
 menu_items = OrderedDict()
 menu_items['BUY'] = ft.buy
 menu_items['SELL'] = ft.sell
+menu_items['OPEN SHORT'] = ft.open_short
+menu_items['CLOSE SHORT'] = ft.close_short
 menu_items['SELECT PAIR'] = set_pair_menu_enabled
 pair_menu_items = OrderedDict()
 pair_menu_items['USDRUB'] = ft.select_usdrub

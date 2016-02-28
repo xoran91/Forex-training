@@ -75,14 +75,18 @@ class Core:
         self.save_data()
 
     def open_short(self):
+        self.get_data()
         _price = self.get_quote_price()
         self.short_size = 3000 * _price
+        self.save_data()
 
     def close_short(self):
+        self.get_data()
         _price = self.get_quote_price()
         _income = ((self.short_size / _price) - 3000) * 0.90
         self.short_size = 0
-        self.USD += _income
+        self.quote_currency += _income
+        self.save_data()
 
     def select_usdrub(self):
         self.save_data
